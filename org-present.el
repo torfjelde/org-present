@@ -60,6 +60,8 @@
 ;; left and right page keys
 (define-key org-present-mode-keymap [right]         'org-present-next)
 (define-key org-present-mode-keymap [left]          'org-present-prev)
+(define-key org-present-mode-keymap [C-right]       'org-present-next-top)
+(define-key org-present-mode-keymap [C-left]        'org-present-prev-top)
 (define-key org-present-mode-keymap (kbd "C-c C-=") 'org-present-big)
 (define-key org-present-mode-keymap (kbd "C-c C--") 'org-present-small)
 (define-key org-present-mode-keymap (kbd "C-c C-q") 'org-present-quit)
@@ -87,9 +89,25 @@
   (unless (org-at-heading-p) (outline-previous-heading))
   (let ((level (org-current-level)))
     (when (and level (> level 1))
-      (outline-up-heading (- level 1) t))))
+      (outline-up-heading (- level 1) t)))
+  )
+
+(defun org-present-nearest-top ()
+  "Jump to current top-level heading, should be safe outside a heading."
+  (unless (org-at-heading-p) (outline-previous-heading)))
 
 (defun org-present-next ()
+  "Jump to next top-level heading."
+  (interactive)
+  (widen)
+  (if (org-current-level) ;inside any heading
+      (org-next-visible-heading 1)
+    ;; else handle title page before first heading
+    (outline-next-heading))
+  (org-present-narrow)
+  (org-present-run-after-navigate-functions))
+
+(defun org-present-next-top ()
   "Jump to next top-level heading."
   (interactive)
   (widen)
@@ -105,6 +123,19 @@
   (org-present-run-after-navigate-functions))
 
 (defun org-present-prev ()
+  "Jump to previous top-level heading."
+  (interactive)
+  (if (org-current-level)
+      (progn
+        (widen)
+        (org-previous-visible-heading 1)
+        ;; (org-present-nearest-top)
+        ;; (org-get-last-sibling)
+        ))
+  (org-present-narrow)
+  (org-present-run-after-navigate-functions))
+
+(defun org-present-prev-top ()
   "Jump to previous top-level heading."
   (interactive)
   (if (org-current-level)
